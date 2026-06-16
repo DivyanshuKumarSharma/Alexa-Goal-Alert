@@ -10,6 +10,7 @@ samconfig.toml
 *.zip
 
 # Environment files and local secrets
+.aws/
 .env
 .env.*
 *.local
