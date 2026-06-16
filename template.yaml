@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Poll FIFA World Cup live goals and trigger an Alexa routine through a Sinric Pro contact sensor.
+
+Parameters:
+  FootballDataApiToken:
+    Type: String
+    NoEcho: true
+  SinricAppKey:
+    Type: String
+    NoEcho: true
+  SinricAppSecret:
+    Type: String
+    NoEcho: true
+  SinricDeviceId:
+    Type: String
+    NoEcho: true
+  CompetitionCode:
+    Type: String
+    Default: WC
+
+Resources:
+  GoalAlertStateTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
+  GoalAlertFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Runtime: nodejs22.x
+      Handler: index.handler
+      CodeUri: .
+      Timeout: 60
+      MemorySize: 128
+      Environment:
+        Variables:
+          FOOTBALL_DATA_API_TOKEN: !Ref FootballDataApiToken
+          SINRIC_APP_KEY: !Ref SinricAppKey
+          SINRIC_APP_SECRET: !Ref SinricAppSecret
+          SINRIC_DEVICE_ID: !Ref SinricDeviceId
+          SINRIC_HOLD_OPEN_MS: "5000"
+          COMPETITION_CODE: !Ref CompetitionCode
+          STATE_TABLE_NAME: !Ref GoalAlertStateTable
+          ALERT_EXISTING_GOALS: "false"
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref GoalAlertStateTable
+      Events:
+        EveryFiveMinutes:
+          Type: ScheduleV2
+          Properties:
+            ScheduleExpression: rate(5 minutes)
+
+Outputs:
+  FunctionName:
+    Value: !Ref GoalAlertFunction
+  StateTableName:
+    Value: !Ref GoalAlertStateTable

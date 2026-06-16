@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+
+# AWS SAM build and deployment artifacts
+.aws-sam/
+samconfig.toml
+*.aws-sam
+
+# Packaged Lambda artifacts
+*.zip
+
+# Environment files and local secrets
+.env
+.env.*
+*.local
+*.secret
+secrets.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Python artifacts from local checks
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Node/package manager cache
+.npm/
+.pnpm-store/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
