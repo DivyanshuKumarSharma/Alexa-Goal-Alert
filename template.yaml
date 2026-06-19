@@ -45,7 +45,8 @@ Resources:
           SINRIC_APP_KEY: !Ref SinricAppKey
           SINRIC_APP_SECRET: !Ref SinricAppSecret
           SINRIC_DEVICE_ID: !Ref SinricDeviceId
-          SINRIC_HOLD_OPEN_MS: "5000"
+          SINRIC_HOLD_OPEN_MS: "10000"
+          SCORE_PROVIDER: "espn"
           COMPETITION_CODE: !Ref CompetitionCode
           STATE_TABLE_NAME: !Ref GoalAlertStateTable
           ALERT_EXISTING_GOALS: "false"
@@ -53,10 +54,10 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref GoalAlertStateTable
       Events:
-        EveryFiveMinutes:
+        EveryMinute:
           Type: ScheduleV2
           Properties:
-            ScheduleExpression: rate(5 minutes)
+            ScheduleExpression: rate(1 minute)
 
 Outputs:
   FunctionName:

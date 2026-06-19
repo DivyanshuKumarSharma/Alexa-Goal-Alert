@@ -1,13 +1,13 @@
 # Alexa Goal Alert
 
-This project checks for live FIFA World Cup goals every five minutes. When it finds a new goal, AWS Lambda opens a Sinric Pro contact sensor. Alexa sees that contact sensor open and runs a routine on the bedroom Echo Dot.
+This project checks for live FIFA World Cup goals every minute. When it finds a new goal, AWS Lambda opens a Sinric Pro contact sensor. Alexa sees that contact sensor open and runs a routine on the bedroom Echo Dot.
 
 ## Pipeline
 
 ```text
-EventBridge Scheduler, every 5 minutes
+EventBridge Scheduler, every 1 minute
   -> AWS Lambda, Node.js
-  -> football-data.org /v4/matches
+  -> ESPN FIFA World Cup scoreboard
   -> DynamoDB state table, prevents duplicate alerts
   -> Sinric Pro contact sensor opens
   -> Alexa Routine triggers
@@ -15,7 +15,7 @@ EventBridge Scheduler, every 5 minutes
   -> Sinric Pro contact sensor closes again
 ```
 
-The alert can be delayed by up to about five minutes because the schedule polls every five minutes.
+The alert can be delayed by the score provider's live data lag, plus up to about one minute because the schedule polls every minute.
 
 ## Why Sinric Pro
 
@@ -60,9 +60,23 @@ In the Alexa app:
 
 To change the Echo Dot noise later, edit only the routine's `Alexa Will` action. Keep the `When this happens` trigger unchanged.
 
-## football-data.org Setup
+## Score Provider Setup
 
-This project uses football-data.org and asks for expanded goal data using the `X-Unfold-Goals` header.
+This project defaults to ESPN's FIFA World Cup scoreboard because football-data.org was slow/incomplete for live goal details during testing.
+
+The Lambda environment variable is:
+
+```text
+SCORE_PROVIDER=espn
+```
+
+football-data.org remains available as a fallback by setting:
+
+```text
+SCORE_PROVIDER=football-data
+```
+
+When using the football-data fallback, the project asks for expanded goal data using the `X-Unfold-Goals` header.
 
 1. Create a football-data.org API token.
 2. Keep the token private.
@@ -160,16 +174,16 @@ Then verify the schedule:
 1. Open `EventBridge Scheduler`.
 2. Open `GoalAlertFunctionEveryFiveMinutes`.
 3. Confirm `Status` is `Enabled`.
-4. Confirm the schedule is `rate (5 minutes)`.
+4. Confirm the schedule is `rate (1 minute)`.
 5. Confirm the target is the goal alert Lambda function.
 
 ## What Happens On A Goal
 
 If a goal is scored in a live World Cup match:
 
-1. EventBridge runs Lambda on the next five-minute tick.
-2. Lambda checks football-data.org.
-3. Lambda detects the new goal.
+1. EventBridge runs Lambda on the next one-minute tick.
+2. Lambda checks the configured score provider.
+3. Lambda detects a changed live scoreline.
 4. DynamoDB records the goal ID so it does not alert twice.
 5. Lambda opens the Sinric Pro contact sensor.
 6. Alexa sees the contact sensor open.
@@ -205,6 +219,7 @@ SINRIC_APP_KEY
 SINRIC_APP_SECRET
 SINRIC_DEVICE_ID
 SINRIC_HOLD_OPEN_MS
+SCORE_PROVIDER
 COMPETITION_CODE
 STATE_TABLE_NAME
 ALERT_EXISTING_GOALS
@@ -219,4 +234,4 @@ SAM is the preferred path. If needed, the manual AWS Console equivalent is:
 3. Upload a zip containing `index.mjs`, `package.json`, `package-lock.json`, and `node_modules`.
 4. Add the environment variables above.
 5. Give the Lambda role `dynamodb:GetItem` and `dynamodb:PutItem` on the table.
-6. Create an EventBridge Scheduler rule with `rate(5 minutes)` targeting the Lambda.
+6. Create an EventBridge Scheduler rule with `rate(1 minute)` targeting the Lambda.
